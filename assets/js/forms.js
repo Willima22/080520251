@@ -1,5 +1,5 @@
 /**
- * Form handling JavaScript for Instagram Post Scheduler
+ * Form handling JavaScript for AW7 Postagens
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -40,6 +40,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize dynamic form elements
     initFormElements();
+    
+    // Set default time to 6h for new scheduling forms
+    const horaPostagem = document.getElementById('hora_postagem');
+    if (horaPostagem && horaPostagem.value === '') {
+        horaPostagem.value = '06:00';
+    }
+    
+    // Time presets dropdown
+    const timePresets = document.querySelectorAll('.time-presets .dropdown-item');
+    if (timePresets.length) {
+        timePresets.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const value = this.dataset.value;
+                const horaInput = document.getElementById('hora_postagem');
+                if (horaInput) {
+                    horaInput.value = value;
+                }
+            });
+        });
+    }
 });
 
 /**

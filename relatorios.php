@@ -81,10 +81,10 @@ $topClients = [];
 $query = "SELECT c.nome, COUNT(p.id) as total 
           FROM postagens p 
           JOIN clientes c ON p.cliente_id = c.id 
-          GROUP BY p.cliente_id 
+          GROUP BY p.cliente_id, c.nome 
           ORDER BY total DESC 
           LIMIT 5";
-$stmt = $conn->prepare($query);
+$stmt = $pdo->prepare($query);
 $stmt->execute();
 $topClients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

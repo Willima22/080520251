@@ -185,7 +185,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="col-md-6">
                                 <label for="hora_postagem" class="form-label">Hora da Postagem *</label>
-                                <input type="text" class="form-control timepicker" id="hora_postagem" name="hora_postagem" placeholder="HH:MM" required>
+                                <div class="input-group">
+                                    <input type="text" class="form-control timepicker" id="hora_postagem" name="hora_postagem" value="06:00" required>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-clock"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end time-presets">
+                                            <li><a class="dropdown-item" href="#" data-value="06:00">06:00 (Manhã)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="12:00">12:00 (Meio-dia)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="15:00">15:00 (Tarde)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="18:00">18:00 (Final da Tarde)</a></li>
+                                            <li><a class="dropdown-item" href="#" data-value="21:00">21:00 (Noite)</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
                                 <div class="form-text">Hora em horário do Brasil (será convertida para UTC).</div>
                             </div>
                         </div>

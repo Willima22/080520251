@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background: linear-gradient(45deg, #F77737, #E1306C, #833AB4, #405DE6);
+            background: linear-gradient(45deg, #0A1C30, #6CBD45);
         }
         .login-container {
             background: white;
@@ -67,15 +67,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
             margin-bottom: 30px;
         }
+        .logo img {
+            height: 80px;
+            margin-bottom: 15px;
+        }
         .form-control {
             padding: 12px;
+        }
+        .btn-primary {
+            background-color: #6CBD45;
+            border-color: #6CBD45;
+        }
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: #5aa539;
+            border-color: #5aa539;
+        }
+        .alert-danger {
+            background-color: #ED4956;
+            color: white;
+            border: none;
+        }
+        .alert-warning {
+            background-color: #FFA500;
+            color: white;
+            border: none;
+        }
+        .text-muted {
+            color: #0A1C30 !important;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo">
-            <h1><?= APP_NAME ?></h1>
+            <img src="assets/img/logo.png" alt="<?= APP_NAME ?>">
+            <h2><?= APP_NAME ?></h2>
         </div>
         
         <?php $flash = getFlashMessage(); ?>

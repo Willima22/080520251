@@ -1,16 +1,16 @@
-/* Main Styles for Instagram Post Scheduler */
+/* Main Styles for AW7 Postagens */
 
 :root {
-    /* Instagram inspired colors */
-    --primary-color: #E1306C;     /* Rose vibrant */
-    --secondary-color: #F77737;   /* Orange vibrant */
-    --accent-color: #405DE6;      /* Blue purplish */
+    /* AW7 colors */
+    --primary-color: #6CBD45;     /* AW7 Green */
+    --secondary-color: #0A1C30;   /* AW7 Dark Blue */
+    --accent-color: #405DE6;      /* Blue accent */
     --soft-button-bg: #FAFAFA;    /* Almost white background */
     --text-primary: #262626;      /* Soft black */
     --text-secondary: #8E8E8E;    /* Gray */
     --background: #FFFFFF;        /* Pure white */
-    --danger-color: #ED4956;      /* Instagram red */
-    --success-color: #58CF86;     /* Instagram green */
+    --danger-color: #ED4956;      /* Red */
+    --success-color: #58CF86;     /* Green */
 }
 
 body {
@@ -20,9 +20,9 @@ body {
     line-height: 1.5;
 }
 
-/* Instagram gradient header */
+/* AW7 gradient header */
 .instagram-gradient {
-    background: linear-gradient(45deg, #F77737, #E1306C, #833AB4, #405DE6);
+    background: linear-gradient(45deg, #0A1C30, #6CBD45);
 }
 
 /* Typography */

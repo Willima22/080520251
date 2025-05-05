@@ -15,7 +15,7 @@ session_start();
 date_default_timezone_set('America/Sao_Paulo'); // Brazil timezone for display
 
 // Application constants
-define('APP_NAME', 'Instagram Post Scheduler');
+define('APP_NAME', 'AW7 Postagens');
 define('APP_VERSION', '1.0.0');
 define('APP_URL', (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']);
 define('WEBHOOK_URL', 'https://automacao2.aw7agencia.com.br/webhook/agendarpostagem');

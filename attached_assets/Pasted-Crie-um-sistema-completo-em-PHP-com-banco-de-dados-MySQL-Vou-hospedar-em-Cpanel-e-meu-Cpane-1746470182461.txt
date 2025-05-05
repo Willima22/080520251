@@ -1,0 +1,85 @@
+Crie um sistema completo em **PHP** com banco de dados **MySQL**. Vou hospedar em Cpanel e meu Cpanel não aceita Postgress, so Maria DB.
+
+### Estrutura de Páginas e Funcionalidades
+
+**1. Dashboard (`dashboard.php`)**
+
+* Exibir resumo visual de todas as tabelas do sistema.
+* Design bonito, moderno, intuitivo e responsivo.
+
+**2. Módulo de Agendamento de Postagem (`index.php`)**
+Formulário com os seguintes campos:
+
+* **Cliente:** Lista suspensa (`select`) com todos os clientes da tabela `clientes`.
+* **Tipo de Postagem:** Botões de seleção para `Feed`, `Stories` ou `Feed e Stories`.
+* **Formato:** Botões de seleção para `Imagem Única`, `Vídeo Único` ou `Carrossel`.
+* **Data da Postagem:** Campo de data exibido em **horário do Brasil**, mas na hora de enviar, converter para **UTC ISO 8601**.
+* **Hora da Postagem:** Mesmo comportamento da data.
+* **Mídia:**
+
+  * Se for mídia única: permitir upload de 1 imagem ou 1 vídeo.
+  * Se for carrossel: permitir upload de até **20 imagens** (até 1GB no total).
+* **Legenda:** Campo de texto limitado a **1000 caracteres**.
+
+**3. Página de Confirmação (`confirmar_postagem.php`)**
+
+* Exibir todos os dados preenchidos, com destaque para o cliente.
+* Botão: **"Agendar publicação"** que dispara uma chamada `POST` para o webhook:
+  `https://automacao2.aw7agencia.com.br/webhook/agendarpostagem`.
+
+> Observação: permitir agendar **em datas e horários passados** sem restrição.
+
+**4. Cadastro de Clientes (`clientes.php`)**
+Campos obrigatórios:
+
+* Nome do Cliente
+* ID do Grupo
+* Instagram
+* ID do Instagram
+* Conta de Anúncio
+* Link do Business
+
+**5. Visualização de Clientes (`clientes_visualizar.php`)**
+Tabela exibindo todos os dados dos clientes cadastrados.
+
+**6. Cadastro de Usuários (`usuarios.php`)**
+Campos obrigatórios:
+
+* Nome
+* E-mail
+* CPF
+* Usuário
+* Senha (criptografada)
+* Tipo de Usuário (`Editor` ou `Administrador`)
+
+**7. Relatórios (`relatorios.php`)**
+Página reservada para relatórios (apenas estrutura, sem funcionalidades ainda).
+
+
+### Rotas do sistema
+
+| Página                   | Caminho                    | Função Principal                   |
+| ------------------------ | -------------------------- | ---------------------------------- |
+| Dashboard                | `/dashboard.php`           | Resumo visual do sistema           |
+| Agendar Postagem         | `/index.php`               | Formulário para agendamento        |
+| Confirmar Agendamento    | `/confirmar_postagem.php`  | Visualizar e confirmar agendamento |
+| Cadastro de Clientes     | `/clientes.php`            | Cadastrar novos clientes           |
+| Visualização de Clientes | `/clientes_visualizar.php` | Listar e visualizar clientes       |
+| Cadastro de Usuários     | `/usuarios.php`            | Cadastrar novos usuários           |
+| Relatórios               | `/relatorios.php`          | Área reservada para relatórios     |
+
+### Cores
+
+| Elemento                        | Cor (Hex) | Observações                                     |
+| ------------------------------- | --------- | ----------------------------------------------- |
+| **Primária (Principal)**        | `#E1306C` | Rosa vibrante (ícone principal do Instagram)    |
+| **Secundária (Gradiente topo)** | `#F77737` | Laranja vibrante                                |
+| **Detalhes/Acentos**            | `#405DE6` | Azul arroxeado (clássico do botão do Instagram) |
+| **Fundo de Botões Suaves**      | `#FAFAFA` | Fundo quase branco                              |
+| **Texto Principal**             | `#262626` | Preto suave (texto geral)                       |
+| **Texto Secundário**            | `#8E8E8E` | Cinza para textos de apoio                      |
+| **Background Geral**            | `#FFFFFF` | Branco puro para o fundo principal              |
+
+Sugestão adicional de Gradiente se quiser usar no fundo de header ou botões especiais:
+
+background: linear-gradient(45deg, #F77737, #E1306C, #833AB4, #405DE6);

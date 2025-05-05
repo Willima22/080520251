@@ -94,7 +94,7 @@ $query = "SELECT p.*, c.nome as cliente_nome
           JOIN clientes c ON p.cliente_id = c.id 
           ORDER BY p.data_postagem DESC 
           LIMIT 10";
-$stmt = $conn->prepare($query);
+$stmt = $pdo->prepare($query);
 $stmt->execute();
 $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -102,8 +102,15 @@ $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <div class="container">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h1 class="mb-3">Relatórios</h1>
-            <p class="text-secondary">Visualize estatísticas e relatórios de postagens agendadas.</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-3">Relatórios</h1>
+                    <p class="text-secondary">Visualize estatísticas e relatórios de postagens agendadas.</p>
+                </div>
+                <a href="relatorios_instagram.php" class="btn btn-primary">
+                    <i class="fab fa-instagram me-2"></i> Relatórios do Instagram
+                </a>
+            </div>
         </div>
     </div>
     

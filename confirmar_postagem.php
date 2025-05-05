@@ -107,10 +107,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $webhookResponse = 'Error: ' . $e->getMessage();
         }
         
-        // Update post with webhook response
-        $query = "UPDATE postagens SET webhook_response = :response WHERE id = :id";
+        // Update post with webhook response and set webhook_enviado flag
+        $webhookEnviado = ($httpCode >= 200 && $httpCode < 300) ? 1 : 0;
+        $query = "UPDATE postagens SET webhook_response = :response, webhook_enviado = :enviado WHERE id = :id";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':response', $webhookResponse);
+        $stmt->bindParam(':enviado', $webhookEnviado, PDO::PARAM_INT);
         $stmt->bindParam(':id', $postId);
         $stmt->execute();
         

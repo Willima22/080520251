@@ -1,0 +1,121 @@
+<?php
+require_once 'config/config.php';
+require_once 'config/db.php';
+
+// Redirect if already logged in
+if(isset($_SESSION['user_id'])) {
+    redirect('dashboard.php');
+}
+
+// Setup database tables if not exists
+$database = new Database();
+$database->setupTables();
+
+// Process login form
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = isset($_POST['username']) ? sanitize($_POST['username']) : '';
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
+    
+    if (empty($username) || empty($password)) {
+        setFlashMessage('danger', 'Por favor, preencha todos os campos.');
+    } else {
+        require_once 'includes/auth.php';
+        $user = verifyUser($username, $password);
+        
+        if ($user) {
+            createUserSession($user);
+            redirect('dashboard.php');
+        } else {
+            setFlashMessage('danger', 'Usuário ou senha inválidos.');
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Login</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(45deg, #F77737, #E1306C, #833AB4, #405DE6);
+        }
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-control {
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1><?= APP_NAME ?></h1>
+        </div>
+        
+        <?php $flash = getFlashMessage(); ?>
+        <?php if($flash): ?>
+        <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show" role="alert">
+            <?= $flash['message'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php endif; ?>
+        
+        <form method="POST" action="login.php">
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuário</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Digite seu usuário" required>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label">Senha</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Digite sua senha" required>
+                </div>
+            </div>
+            
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">Entrar</button>
+            </div>
+        </form>
+        
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                Usuário padrão: <strong>admin</strong> | Senha: <strong>admin123</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

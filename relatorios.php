@@ -1,6 +1,39 @@
 <?php
+// Iniciar output buffering
+ob_start();
+
 require_once 'config/config.php';
 require_once 'config/db.php';
+require_once 'includes/auth.php';
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) !== 'login.php') {
+    redirect('login.php');
+}
+
+// Define tempo de login se não estiver setado
+if (isset($_SESSION['user_id']) && !isset($_SESSION['login_time'])) {
+    $_SESSION['login_time'] = time();
+    $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
+}
+
+// Verifica inatividade (5 minutos)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 300)) {
+    session_unset();
+    session_destroy();
+    redirect('login.php?reason=inactivity');
+}
+$_SESSION['last_activity'] = time();
+
+// Calcula o tempo logado
+$loginTime = $_SESSION['login_time'] ?? time();
+$timeLoggedIn = time() - $loginTime;
+$hours = floor($timeLoggedIn / 3600);
+$minutes = floor(($timeLoggedIn % 3600) / 60);
+$seconds = $timeLoggedIn % 60;
+$timeLoggedInString = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+
+// Agora carrega o HTML
 require_once 'includes/header.php';
 
 // Check if user has permission
@@ -44,7 +77,7 @@ for ($i = 5; $i >= 0; $i--) {
     $endDate = date('Y-m-t', strtotime($startDate));
     
     // Total posts by month
-    $query = "SELECT COUNT(*) as total FROM postagens WHERE created_at BETWEEN :start AND :end";
+    $query = "SELECT COUNT(*) as total FROM postagens WHERE data_criacao BETWEEN :start AND :end";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':start', $startDate);
     $stmt->bindParam(':end', $endDate);
@@ -84,7 +117,7 @@ $query = "SELECT c.nome, COUNT(p.id) as total
           GROUP BY p.cliente_id, c.nome 
           ORDER BY total DESC 
           LIMIT 5";
-$stmt = $pdo->prepare($query);
+$stmt = $conn->prepare($query);
 $stmt->execute();
 $topClients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -94,7 +127,7 @@ $query = "SELECT p.*, c.nome as cliente_nome
           JOIN clientes c ON p.cliente_id = c.id 
           ORDER BY p.data_postagem DESC 
           LIMIT 10";
-$stmt = $pdo->prepare($query);
+$stmt = $conn->prepare($query);
 $stmt->execute();
 $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -150,7 +183,7 @@ $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         $maxCount = $count;
                                     }
                                 }
-                                echo htmlspecialchars($maxType);
+                                echo htmlspecialchars($maxType ?? '');
                                 ?>
                             </h2>
                         </div>
@@ -178,7 +211,7 @@ $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         $maxCount = $count;
                                     }
                                 }
-                                echo htmlspecialchars($maxFormat);
+                                echo htmlspecialchars($maxFormat ?? '');
                                 ?>
                             </h2>
                         </div>
@@ -235,7 +268,7 @@ $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <tbody>
                                 <?php foreach ($topClients as $client): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($client['nome']) ?></td>
+                                    <td><?= htmlspecialchars($client['nome'] ?? '') ?></td>
                                     <td><?= $client['total'] ?></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -286,9 +319,9 @@ $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <tbody>
                                 <?php foreach ($recentPosts as $post): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($post['cliente_nome']) ?></td>
-                                    <td><?= htmlspecialchars($post['tipo_postagem']) ?></td>
-                                    <td><?= htmlspecialchars($post['formato']) ?></td>
+                                    <td><?= htmlspecialchars($post['cliente_nome'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($post['tipo_postagem'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($post['formato'] ?? '') ?></td>
                                     <td><?= date('d/m/Y H:i', strtotime($post['data_postagem'])) ?></td>
                                     <td>
                                         <?php 
@@ -305,7 +338,7 @@ $recentPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 break;
                                         }
                                         ?>
-                                        <span class="badge bg-<?= $statusClass ?>"><?= htmlspecialchars($post['status']) ?></span>
+                                        <span class="badge bg-<?= $statusClass ?>"><?= htmlspecialchars($post['status'] ?? '') ?></span>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

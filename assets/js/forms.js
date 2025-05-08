@@ -1,243 +1,233 @@
 /**
- * Form handling JavaScript for AW7 Postagens
+ * Scripts para manipulação de formulários
+ * Versão 2.0 - Com verificação de elementos nulos
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Post type selection
-    const postTypeOptions = document.querySelectorAll('.post-type-option');
-    if (postTypeOptions.length) {
-        postTypeOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                postTypeOptions.forEach(opt => opt.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById('tipo_postagem').value = this.dataset.value;
-            });
-        });
-    }
-
-    // Post format selection
-    const formatOptions = document.querySelectorAll('.format-option');
-    if (formatOptions.length) {
-        formatOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                formatOptions.forEach(opt => opt.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById('formato').value = this.dataset.value;
-                
-                // Show/hide file upload based on format
-                toggleFileUploadInterface();
-            });
-        });
-    }
-
-    // Handle file uploads and previews
-    const fileInputs = document.querySelectorAll('.file-upload');
-    if (fileInputs.length) {
-        fileInputs.forEach(input => {
-            input.addEventListener('change', handleFileUpload);
-        });
-    }
-
-    // Initialize dynamic form elements
-    initFormElements();
+    console.log('Inicializando scripts de formulários...');
     
-    // Set default time to 6h for new scheduling forms
-    const horaPostagem = document.getElementById('hora_postagem');
-    if (horaPostagem && horaPostagem.value === '') {
-        horaPostagem.value = '06:00';
-    }
-    
-    // Time presets dropdown
-    const timePresets = document.querySelectorAll('.time-presets .dropdown-item');
-    if (timePresets.length) {
-        timePresets.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                const value = this.dataset.value;
-                const horaInput = document.getElementById('hora_postagem');
-                if (horaInput) {
-                    horaInput.value = value;
-                }
-            });
-        });
-    }
-});
-
-/**
- * Initialize dynamic form elements
- */
-function initFormElements() {
-    // Toggle file upload interface based on selected format
-    toggleFileUploadInterface();
-    
-    // Character counter for legend field
-    const legendaField = document.getElementById('legenda');
-    const characterCounter = document.getElementById('character-count');
-    
-    if (legendaField && characterCounter) {
-        legendaField.addEventListener('input', function() {
-            const remaining = 1000 - this.value.length;
-            characterCounter.textContent = remaining;
-            
-            if (remaining < 0) {
-                characterCounter.classList.add('text-danger');
-                legendaField.classList.add('is-invalid');
-            } else {
-                characterCounter.classList.remove('text-danger');
-                legendaField.classList.remove('is-invalid');
-            }
-        });
-    }
-
-    // Form validation
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', validateForm);
-    }
-}
-
-/**
- * Toggle file upload interface based on selected format
- */
-function toggleFileUploadInterface() {
-    const formato = document.querySelector('input[name="formato"]:checked') || 
-                  document.getElementById('formato');
-    
-    if (!formato) return;
-    
-    const singleUploadContainer = document.getElementById('single-upload-container');
-    const carouselUploadContainer = document.getElementById('carousel-upload-container');
-    
-    if (singleUploadContainer && carouselUploadContainer) {
-        if (formato.value === 'Carrossel') {
-            singleUploadContainer.classList.add('d-none');
-            carouselUploadContainer.classList.remove('d-none');
-        } else {
-            singleUploadContainer.classList.remove('d-none');
-            carouselUploadContainer.classList.add('d-none');
-        }
-    }
-}
-
-/**
- * Handle file upload and preview
- */
-function handleFileUpload(e) {
-    const files = e.target.files;
-    const previewContainer = document.getElementById(e.target.dataset.preview);
-    const isCarousel = e.target.id === 'carouselFiles';
-    const maxFiles = isCarousel ? 20 : 1;
-    
-    if (!previewContainer) return;
-    
-    // Clear preview if not carousel or if we're starting fresh
-    if (!isCarousel || previewContainer.children.length === 0) {
-        previewContainer.innerHTML = '';
-    }
-    
-    // Check if we exceed maximum files for carousel
-    if (isCarousel && (previewContainer.children.length + files.length > maxFiles)) {
-        alert(`Você pode adicionar no máximo ${maxFiles} arquivos para um carrossel.`);
+    // Variável para rastrear se os eventos já foram configurados
+    if (window.formsScriptInitialized) {
+        console.log('Scripts de formulários já inicializados');
         return;
     }
     
-    // Add preview for each file
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
+    window.formsScriptInitialized = true;
+    
+    try {
+        // Configurar máscaras de entrada para campos específicos
+        setupInputMasks();
         
-        reader.onload = function(event) {
-            const previewItem = document.createElement('div');
-            previewItem.className = 'preview-item';
-            
-            if (file.type.startsWith('image/')) {
-                previewItem.innerHTML = `
-                    <img src="${event.target.result}" alt="Preview">
-                    <button type="button" class="remove-btn" onclick="removePreview(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            } else if (file.type.startsWith('video/')) {
-                previewItem.innerHTML = `
-                    <div class="video-preview">
-                        <i class="fas fa-video fa-2x"></i>
-                        <span>${file.name}</span>
-                    </div>
-                    <button type="button" class="remove-btn" onclick="removePreview(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            }
-            
-            previewContainer.appendChild(previewItem);
-        };
+        // Configurar validação de formulários
+        setupFormValidation();
         
-        reader.readAsDataURL(file);
+        // Configurar comportamentos adicionais de formulários
+        setupFormBehaviors();
+        
+        console.log('Scripts de formulários inicializados com sucesso');
+    } catch (error) {
+        console.error('Erro ao inicializar scripts de formulários:', error);
+    }
+});
+
+// Configurar máscaras de entrada
+function setupInputMasks() {
+    try {
+        // Máscaras para telefones
+        const phoneInputs = document.querySelectorAll('.phone-mask');
+        if (phoneInputs && phoneInputs.length > 0) {
+            phoneInputs.forEach(input => {
+                if (!input) return;
+                
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        // Formatar como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+                        if (value.length <= 10) {
+                            value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                        } else {
+                            value = value.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+                        }
+                    }
+                    e.target.value = value;
+                });
+            });
+        }
+        
+        // Máscaras para CPF
+        const cpfInputs = document.querySelectorAll('.cpf-mask');
+        if (cpfInputs && cpfInputs.length > 0) {
+            cpfInputs.forEach(input => {
+                if (!input) return;
+                
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        // Formatar como XXX.XXX.XXX-XX
+                        value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+                    }
+                    e.target.value = value;
+                });
+            });
+        }
+        
+        // Máscaras para CNPJ
+        const cnpjInputs = document.querySelectorAll('.cnpj-mask');
+        if (cnpjInputs && cnpjInputs.length > 0) {
+            cnpjInputs.forEach(input => {
+                if (!input) return;
+                
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        // Formatar como XX.XXX.XXX/XXXX-XX
+                        value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+                    }
+                    e.target.value = value;
+                });
+            });
+        }
+        
+        // Máscaras para CEP
+        const cepInputs = document.querySelectorAll('.cep-mask');
+        if (cepInputs && cepInputs.length > 0) {
+            cepInputs.forEach(input => {
+                if (!input) return;
+                
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        // Formatar como XXXXX-XXX
+                        value = value.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+                    }
+                    e.target.value = value;
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao configurar máscaras de entrada:', error);
     }
 }
 
-/**
- * Remove preview item
- */
-function removePreview(button) {
-    const previewItem = button.parentElement;
-    const previewContainer = previewItem.parentElement;
-    previewContainer.removeChild(previewItem);
+// Configurar validação de formulários
+function setupFormValidation() {
+    try {
+        // Verificar se o Bootstrap está disponível
+        if (typeof bootstrap === 'undefined') {
+            console.warn('Bootstrap não detectado. Algumas funcionalidades de validação podem não funcionar.');
+        }
+        
+        // Obter todos os formulários que precisam de validação
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        if (forms && forms.length > 0) {
+            forms.forEach(form => {
+                // Verificar se o formulário existe antes de tentar acessar propriedades
+                if (!form) return;
+                
+                // Verificar se o formulário tem um elemento de submissão
+                const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+                
+                if (submitButton) {
+                    form.addEventListener('submit', function(event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        
+                        form.classList.add('was-validated');
+                    }, false);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao configurar validação de formulários:', error);
+    }
 }
 
-/**
- * Validate form before submission
- */
-function validateForm(e) {
-    let isValid = true;
-    const requiredFields = [
-        'cliente_id',
-        'tipo_postagem',
-        'formato',
-        'data_postagem',
-        'hora_postagem'
-    ];
-    
-    // Check required fields
-    requiredFields.forEach(field => {
-        const element = document.getElementById(field);
-        if (element && !element.value.trim()) {
-            element.classList.add('is-invalid');
-            isValid = false;
-        } else if (element) {
-            element.classList.remove('is-invalid');
+// Configurar comportamentos adicionais de formulários
+function setupFormBehaviors() {
+    try {
+        // Configurar tooltips para campos com informações adicionais
+        const tooltipTriggers = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        if (tooltipTriggers && tooltipTriggers.length > 0 && typeof bootstrap !== 'undefined') {
+            tooltipTriggers.forEach(trigger => {
+                if (!trigger) return;
+                
+                try {
+                    new bootstrap.Tooltip(trigger);
+                } catch (e) {
+                    console.warn('Erro ao inicializar tooltip:', e);
+                }
+            });
         }
-    });
-    
-    // Check file uploads
-    const formato = document.getElementById('formato').value;
-    let filesValid = true;
-    
-    if (formato === 'Imagem Única' || formato === 'Vídeo Único') {
-        const fileInput = document.getElementById('singleFile');
-        if (!fileInput.files.length) {
-            document.getElementById('single-upload-container').classList.add('border', 'border-danger');
-            filesValid = false;
-        } else {
-            document.getElementById('single-upload-container').classList.remove('border', 'border-danger');
+        
+        // Configurar botões de alternância
+        const toggleButtons = document.querySelectorAll('.toggle-button-group .btn');
+        if (toggleButtons && toggleButtons.length > 0) {
+            toggleButtons.forEach(btn => {
+                if (!btn) return;
+                
+                btn.addEventListener('click', function() {
+                    // Verificar se o botão tem um grupo pai
+                    const group = this.closest('.toggle-button-group');
+                    if (!group) return;
+                    
+                    // Remover classe ativa de todos os botões no grupo
+                    const buttons = group.querySelectorAll('.btn');
+                    if (buttons && buttons.length > 0) {
+                        buttons.forEach(button => {
+                            if (button) button.classList.remove('active');
+                        });
+                    }
+                    
+                    // Adicionar classe ativa ao botão clicado
+                    this.classList.add('active');
+                    
+                    // Atualizar valor de campo oculto, se existir
+                    const targetId = group.getAttribute('data-target');
+                    if (targetId) {
+                        const hiddenInput = document.getElementById(targetId);
+                        if (hiddenInput) {
+                            hiddenInput.value = this.getAttribute('data-value') || '';
+                        }
+                    }
+                });
+            });
         }
-    } else if (formato === 'Carrossel') {
-        const previewContainer = document.getElementById('carouselPreview');
-        if (!previewContainer.children.length) {
-            document.getElementById('carousel-upload-container').classList.add('border', 'border-danger');
-            filesValid = false;
-        } else {
-            document.getElementById('carousel-upload-container').classList.remove('border', 'border-danger');
+        
+        // Configurar campos dependentes
+        const dependentFields = document.querySelectorAll('[data-depends-on]');
+        if (dependentFields && dependentFields.length > 0) {
+            dependentFields.forEach(field => {
+                if (!field) return;
+                
+                const dependsOnId = field.getAttribute('data-depends-on');
+                if (!dependsOnId) return;
+                
+                const dependsOnField = document.getElementById(dependsOnId);
+                
+                if (dependsOnField) {
+                    dependsOnField.addEventListener('change', function() {
+                        const requiredValue = field.getAttribute('data-required-value');
+                        const container = field.closest('.dependent-field-container');
+                        
+                        if (this.value === requiredValue) {
+                            if (container) container.classList.remove('d-none');
+                            field.required = true;
+                        } else {
+                            if (container) container.classList.add('d-none');
+                            field.required = false;
+                            field.value = '';
+                        }
+                    });
+                    
+                    // Trigger inicial
+                    dependsOnField.dispatchEvent(new Event('change'));
+                }
+            });
         }
+    } catch (error) {
+        console.error('Erro ao configurar comportamentos de formulários:', error);
     }
-    
-    isValid = isValid && filesValid;
-    
-    // Prevent form submission if validation fails
-    if (!isValid) {
-        e.preventDefault();
-        alert('Por favor, preencha todos os campos obrigatórios e selecione os arquivos necessários.');
-    }
-    
-    return isValid;
 }

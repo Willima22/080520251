@@ -1,4 +1,7 @@
 <?php
+// Iniciar output buffering
+ob_start();
+
 /**
  * Postagens Agendadas
  * Visualização das postagens que foram agendadas
@@ -7,16 +10,50 @@
 require_once 'config/config.php';
 require_once 'config/db.php';
 require_once 'includes/auth.php';
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) !== 'login.php') {
+    redirect('login.php');
+}
+
+// Define tempo de login se não estiver setado
+if (isset($_SESSION['user_id']) && !isset($_SESSION['login_time'])) {
+    $_SESSION['login_time'] = time();
+    $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
+}
+
+// Verifica inatividade (5 minutos)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 300)) {
+    session_unset();
+    session_destroy();
+    redirect('login.php?reason=inactivity');
+}
+$_SESSION['last_activity'] = time();
+
+// Calcula o tempo logado
+$loginTime = $_SESSION['login_time'] ?? time();
+$timeLoggedIn = time() - $loginTime;
+$hours = floor($timeLoggedIn / 3600);
+$minutes = floor(($timeLoggedIn % 3600) / 60);
+$seconds = $timeLoggedIn % 60;
+$timeLoggedInString = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+
+// Agora carrega o HTML
 require_once 'includes/header.php';
 
+// Get database connection
+$database = new Database();
+$conn = $database->connect();
+
 // Obter postagens agendadas
-$sql = "SELECT p.id, p.cliente_id, p.titulo, p.descricao, p.data_agendamento, p.hora_agendamento, 
-        p.data_postagem, p.status, p.tipo_midia, p.arquivos, p.webhook_enviado, p.criado_em, 
-        c.nome as cliente_nome
-        FROM postagens p
-        LEFT JOIN clientes c ON p.cliente_id = c.id
-        ORDER BY p.data_agendamento DESC, p.hora_agendamento ASC";
-$stmt = $pdo->prepare($sql);
+$sql = "SELECT p.id, p.cliente_id, p.tipo_postagem, p.formato, p.data_postagem, p.data_postagem_utc,
+        p.webhook_status as status, p.post_id_unique as arquivos, p.data_criacao, 
+        c.nome_cliente as cliente_nome, u.nome as usuario_nome, u.id as usuario_id
+        FROM postagens AS p
+        LEFT JOIN clientes AS c ON p.cliente_id = c.id
+        LEFT JOIN usuarios AS u ON p.usuario_id = u.id
+        ORDER BY p.data_postagem DESC";
+$stmt = $conn->prepare($sql);
 $stmt->execute();
 $postagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -25,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $postagem_id = $_POST['postagem_id'];
     
     // Atualizar status para cancelado
-    $sql = "UPDATE postagens SET status = 'Cancelado' WHERE id = ?";
-    $stmt = $pdo->prepare($sql);
+    $sql = "UPDATE postagens SET webhook_status = 'Cancelado' WHERE id = ?";
+    $stmt = $conn->prepare($sql);
     $result = $stmt->execute([$postagem_id]);
     
     if ($result) {
@@ -60,11 +97,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <option value="">Todos</option>
                     <?php 
                     // Obter lista de clientes
-                    $clientes = $pdo->query("SELECT id, nome FROM clientes ORDER BY nome")->fetchAll();
+                    $clientes = $conn->query("SELECT id, nome FROM clientes ORDER BY nome")->fetchAll();
                     foreach ($clientes as $cliente) {
                         echo "<option value=\"{$cliente['id']}\">{$cliente['nome']}</option>";
                     }
                     ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtroTipoPostagem" class="form-label">Tipo de Postagem</label>
+                <select class="form-select" id="filtroTipoPostagem">
+                    <option value="">Todos</option>
+                    <option value="Feed">Feed</option>
+                    <option value="Story">Story</option>
+                    <option value="Feed e Story">Feed e Story</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -106,12 +152,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <tr>
                         <th>ID</th>
                         <th>Cliente</th>
-                        <th>Título</th>
-                        <th>Data/Hora</th>
                         <th>Tipo</th>
+                        <th>Formato</th>
+                        <th>Data/Hora</th>
                         <th>Status</th>
-                        <th>Webhook</th>
                         <th>Criado em</th>
+                        <th>Criado por</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -119,26 +165,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <?php foreach ($postagens as $postagem): ?>
                     <tr class="postagem-row" 
                         data-cliente="<?= $postagem['cliente_id'] ?>" 
+                        data-tipo="<?= $postagem['tipo_postagem'] ?>" 
                         data-status="<?= $postagem['status'] ?>" 
-                        data-data="<?= $postagem['data_agendamento'] ?>">
+                        data-data="<?= date('Y-m-d', strtotime($postagem['data_postagem'])) ?>">
                         <td><?= $postagem['id'] ?></td>
-                        <td><?= htmlspecialchars($postagem['cliente_nome']) ?></td>
-                        <td><?= htmlspecialchars($postagem['titulo']) ?></td>
+                        <td><?= htmlspecialchars($postagem['cliente_nome'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($postagem['tipo_postagem'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($postagem['formato'] ?? '') ?></td>
                         <td>
-                            <?= date('d/m/Y', strtotime($postagem['data_agendamento'])) ?>
-                            às
-                            <?= $postagem['hora_agendamento'] ?>
-                        </td>
-                        <td>
-                            <?php if ($postagem['tipo_midia'] == 'imagem'): ?>
-                                <span class="badge bg-primary"><i class="fas fa-image"></i> Imagem</span>
-                            <?php elseif ($postagem['tipo_midia'] == 'video'): ?>
-                                <span class="badge bg-danger"><i class="fas fa-video"></i> Vídeo</span>
-                            <?php elseif ($postagem['tipo_midia'] == 'carrossel'): ?>
-                                <span class="badge bg-success"><i class="fas fa-images"></i> Carrossel</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary"><?= $postagem['tipo_midia'] ?></span>
-                            <?php endif; ?>
+                            <?php
+                            $data_br = $postagem['data_postagem'] ?? '';
+                            $data_utc = $postagem['data_postagem_utc'] ?? '';
+                            $data_formatada = 'Data não definida';
+                            
+                            if (!empty($data_br) && $data_br !== '0000-00-00 00:00:00') {
+                                $timestamp = strtotime($data_br);
+                                if ($timestamp !== false) {
+                                    $data_formatada = date('d/m/Y H:i', $timestamp);
+                                }
+                            } elseif (!empty($data_utc)) {
+                                $data_convertida = str_replace(['T', 'Z'], [' ', ''], $data_utc);
+                                $timestamp = strtotime($data_convertida);
+                                if ($timestamp !== false) {
+                                    $timestamp_brasilia = $timestamp - (3 * 3600);
+                                    $data_formatada = date('d/m/Y H:i', $timestamp_brasilia);
+                                }
+                            }
+                            
+                            echo $data_formatada;
+                            ?>
                         </td>
                         <td>
                             <?php if ($postagem['status'] == 'Agendado'): ?>
@@ -153,43 +208,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 <span class="badge bg-secondary"><?= $postagem['status'] ?></span>
                             <?php endif; ?>
                         </td>
+                        <td><?= date('d/m/Y H:i', strtotime($postagem['data_criacao'])) ?></td>
+                        <td><?= htmlspecialchars($postagem['usuario_nome'] ?? '') ?></td>
                         <td>
-                            <?php if ($postagem['webhook_enviado']): ?>
-                                <span class="badge bg-success"><i class="fas fa-check"></i> Enviado</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary"><i class="fas fa-times"></i> Pendente</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= date('d/m/Y H:i', strtotime($postagem['criado_em'])) ?></td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" href="visualizar_postagem.php?id=<?= $postagem['id'] ?>">
-                                            <i class="fas fa-eye"></i> Visualizar
-                                        </a>
-                                    </li>
-                                    <?php if ($postagem['status'] == 'Agendado'): ?>
-                                    <li>
-                                        <a class="dropdown-item" href="index.php?editar=<?= $postagem['id'] ?>">
-                                            <i class="fas fa-edit"></i> Editar
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <form action="postagens_agendadas.php" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja cancelar esta postagem?');">
-                                            <input type="hidden" name="action" value="cancelar">
-                                            <input type="hidden" name="postagem_id" value="<?= $postagem['id'] ?>">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="fas fa-ban"></i> Cancelar
-                                            </button>
-                                        </form>
-                                    </li>
-                                    <?php endif; ?>
-                                </ul>
-                            </div>
+                            <a href="visualizar_postagem.php?id=<?= $postagem['id'] ?>" class="btn btn-sm btn-outline-primary" title="Visualizar">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -208,56 +232,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 document.addEventListener('DOMContentLoaded', function() {
     // Filtros
     const filtroCliente = document.getElementById('filtroCliente');
+    const filtroTipoPostagem = document.getElementById('filtroTipoPostagem');
     const filtroStatus = document.getElementById('filtroStatus');
     const filtroDataInicial = document.getElementById('filtroDataInicial');
     const filtroDataFinal = document.getElementById('filtroDataFinal');
     const aplicarFiltros = document.getElementById('aplicarFiltros');
     const limparFiltros = document.getElementById('limparFiltros');
-    const postagemRows = document.querySelectorAll('.postagem-row');
+    const postagens = document.querySelectorAll('.postagem-row');
     
-    // Aplicar filtros
     aplicarFiltros.addEventListener('click', function() {
         const clienteValue = filtroCliente.value;
+        const tipoPostagemValue = filtroTipoPostagem.value;
         const statusValue = filtroStatus.value;
         const dataInicialValue = filtroDataInicial.value;
         const dataFinalValue = filtroDataFinal.value;
         
-        postagemRows.forEach(row => {
+        postagens.forEach(function(postagem) {
             let mostrar = true;
             
             // Filtro de cliente
-            if (clienteValue && row.dataset.cliente !== clienteValue) {
+            if (clienteValue && postagem.dataset.cliente !== clienteValue) {
+                mostrar = false;
+            }
+            
+            // Filtro de tipo de postagem
+            if (tipoPostagemValue && postagem.dataset.tipo !== tipoPostagemValue) {
                 mostrar = false;
             }
             
             // Filtro de status
-            if (statusValue && row.dataset.status !== statusValue) {
+            if (statusValue && postagem.dataset.status !== statusValue) {
                 mostrar = false;
             }
             
-            // Filtro de data
-            if (dataInicialValue && row.dataset.data < dataInicialValue) {
+            // Filtro de data inicial
+            if (dataInicialValue && postagem.dataset.data < dataInicialValue) {
                 mostrar = false;
             }
             
-            if (dataFinalValue && row.dataset.data > dataFinalValue) {
+            // Filtro de data final
+            if (dataFinalValue && postagem.dataset.data > dataFinalValue) {
                 mostrar = false;
             }
             
-            // Mostrar ou esconder a linha
-            row.style.display = mostrar ? '' : 'none';
+            postagem.style.display = mostrar ? '' : 'none';
         });
     });
     
-    // Limpar filtros
     limparFiltros.addEventListener('click', function() {
         filtroCliente.value = '';
+        filtroTipoPostagem.value = '';
         filtroStatus.value = '';
         filtroDataInicial.value = '';
         filtroDataFinal.value = '';
         
-        postagemRows.forEach(row => {
-            row.style.display = '';
+        postagens.forEach(function(postagem) {
+            postagem.style.display = '';
         });
     });
 });

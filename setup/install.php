@@ -333,7 +333,7 @@ foreach ($requirements as $req) {
                             <h4 class="alert-heading">Installation Errors</h4>
                             <ul class="mb-0">
                                 <?php foreach ($errors as $error): ?>
-                                    <li><?= htmlspecialchars($error) ?></li>
+                                    <li><?= htmlspecialchars($error ?? '') ?></li>
                                 <?php endforeach; ?>
                             </ul>
                         </div>
@@ -370,23 +370,23 @@ foreach ($requirements as $req) {
                                     <div class="row mb-3">
                                         <div class="col-md-6">
                                             <label for="db_host" class="form-label">Database Host</label>
-                                            <input type="text" class="form-control" id="db_host" name="db_host" value="<?= htmlspecialchars($dbConfig['host']) ?>" required>
+                                            <input type="text" class="form-control" id="db_host" name="db_host" value="<?= htmlspecialchars($dbConfig['host'] ?? '') ?>" required>
                                             <div class="form-text">Usually 'localhost' or '127.0.0.1'</div>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="db_name" class="form-label">Database Name</label>
-                                            <input type="text" class="form-control" id="db_name" name="db_name" value="<?= htmlspecialchars($dbConfig['name']) ?>" required>
+                                            <input type="text" class="form-control" id="db_name" name="db_name" value="<?= htmlspecialchars($dbConfig['name'] ?? '') ?>" required>
                                             <div class="form-text">The database must exist or the user must have permission to create it</div>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label for="db_user" class="form-label">Database Username</label>
-                                            <input type="text" class="form-control" id="db_user" name="db_user" value="<?= htmlspecialchars($dbConfig['user']) ?>" required>
+                                            <input type="text" class="form-control" id="db_user" name="db_user" value="<?= htmlspecialchars($dbConfig['user'] ?? '') ?>" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="db_pass" class="form-label">Database Password</label>
-                                            <input type="password" class="form-control" id="db_pass" name="db_pass" value="<?= htmlspecialchars($dbConfig['pass']) ?>">
+                                            <input type="password" class="form-control" id="db_pass" name="db_pass" value="<?= htmlspecialchars($dbConfig['pass'] ?? '') ?>">
                                         </div>
                                     </div>
                                 </div>

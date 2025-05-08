@@ -1,0 +1,34 @@
+/**
+ * Correções para o calendário Flatpickr
+ */
+
+/* Esconder o calendário grande que aparece ao lado */
+.flatpickr-calendar.static.open {
+    position: absolute !important;
+    display: block !important;
+}
+
+/* Esconder o segundo calendário que aparece */
+.flatpickr-calendar + .flatpickr-calendar {
+    display: none !important;
+}
+
+/* Ajustar posicionamento do calendário */
+.flatpickr-calendar {
+    margin-top: 2px !important;
+    width: 307px !important;
+}
+
+/* Garantir que o calendário fique sobre outros elementos */
+.flatpickr-calendar.open {
+    z-index: 9999 !important;
+}
+
+/* Estilizar os ícones para indicar que são clicáveis */
+.calendar-trigger, .clock-trigger {
+    cursor: pointer;
+}
+
+.calendar-trigger:hover, .clock-trigger:hover {
+    color: #0d6efd;
+}

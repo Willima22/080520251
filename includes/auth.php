@@ -27,9 +27,13 @@ function verifyUser($username, $password) {
 // Create user session
 function createUserSession($user) {
     $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_nome'] = $user['nome'];
+    $_SESSION['user_name'] = $user['nome'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_type'] = $user['tipo_usuario'];
+    $_SESSION['login_time'] = time();
+    
+    // Registrar login no log
+    registrarLog('Login', 'Usuário realizou login no sistema');
 }
 
 // Check if user has access to a specific module
@@ -55,7 +59,7 @@ function checkPermission($requiredLevel = 'Editor') {
 function requirePermission($requiredLevel = 'Editor') {
     if (!checkPermission($requiredLevel)) {
         setFlashMessage('danger', 'Você não tem permissão para acessar esta página.');
-        redirect('dashboard.php');
+        redirect('index.php');
         exit;
     }
 }

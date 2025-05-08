@@ -1,0 +1,83 @@
+localhost:3306/INFORMATION_SCHEMA/COLUMNS/		https://s1083.usc1.mysecurecloudhost.com:2083/cpsess4117668721/3rdparty/phpMyAdmin/index.php?route=/table/sql&db=opapopol_02052025&table=usuarios
+
+   Mostrando registros 0 - 60 (61 no total, Consulta levou 0.0018 segundos.) [TABLE_NAME: CLIENTES... - USUARIOS...]
+
+
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    COLUMN_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT,
+    COLUMN_KEY,
+    EXTRA
+FROM 
+    INFORMATION_SCHEMA.COLUMNS
+WHERE 
+    TABLE_SCHEMA = 'opapopol_02052025'
+ORDER BY 
+    TABLE_NAME, ORDINAL_POSITION;
+
+
+TABLE_NAME   	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT	COLUMN_KEY	EXTRA	
+clientes	id	int(11)	NO	NULL	PRI	auto_increment	
+clientes	nome_cliente	varchar(100)	NO	NULL			
+clientes	instagram	varchar(50)	NO	NULL			
+clientes	id_instagram	varchar(50)	NO	NULL			
+clientes	id_grupo	varchar(50)	NO	NULL			
+clientes	conta_anuncio	varchar(100)	NO	NULL			
+clientes	link_business	varchar(255)	NO	NULL			
+clientes	data_criacao	datetime	NO	NULL			
+clientes	nome	varchar(255)	YES	NULL			
+historico	id	int(11)	NO	NULL	PRI	auto_increment	
+historico	usuario_id	int(11)	NO	NULL	MUL		
+historico	acao	varchar(100)	NO	NULL			
+historico	detalhes	text	YES	NULL			
+historico	ip	varchar(45)	NO	NULL			
+historico	data_hora	datetime	NO	NULL			
+login_attempts	id	int(11)	NO	NULL	PRI	auto_increment	
+login_attempts	username	varchar(50)	NO	NULL	MUL		
+login_attempts	ip	varchar(45)	NO	NULL	MUL		
+login_attempts	success	tinyint(1)	NO	0			
+login_attempts	data_hora	datetime	NO	NULL			
+midias	id	int(11)	NO	NULL	PRI	auto_increment	
+midias	postagem_id	int(11)	NO	NULL	MUL		
+midias	arquivo_path	varchar(255)	NO	NULL			
+midias	arquivo_nome	varchar(255)	NO	NULL			
+midias	tipo	enum('image','video')	NO	NULL			
+midias	tamanho	int(11)	NO	NULL			
+midias	data_upload	datetime	NO	NULL			
+postagem_media	id	int(11)	NO	NULL	PRI	auto_increment	
+postagem_media	postagem_id	int(11)	NO	NULL	MUL		
+postagem_media	arquivo_path	varchar(255)	NO	NULL			
+postagem_media	arquivo_nome	varchar(255)	NO	NULL			
+postagem_media	tipo	enum('image','video')	NO	NULL			
+postagem_media	tamanho	int(11)	NO	NULL			
+postagem_media	ordem	int(11)	NO	1			
+postagem_media	data_upload	datetime	NO	NULL			
+postagens	id	int(11)	NO	NULL	PRI	auto_increment	
+postagens	cliente_id	int(11)	NO	NULL	MUL		
+postagens	post_id_unique	varchar(100)	NO	NULL	UNI		
+postagens	tipo_postagem	enum('feed','stories','feed_stories')	NO	NULL			
+postagens	formato	enum('imagem_unica','video_unico','carrossel')	NO	NULL			
+postagens	data_postagem	datetime	NO	NULL			
+postagens	data_postagem_utc	varchar(50)	NO	NULL			
+postagens	legenda	text	NO	NULL			
+postagens	webhook_status	tinyint(1)	NO	0			
+postagens	webhook_enviado	tinyint(1)	NO	0			
+postagens	webhook_response	varchar(255)	YES	NULL			
+postagens	data_criacao	datetime	NO	NULL			
+postagens	created_at	datetime	YES	NULL			
+postagens	usuario_id	int(11)	NO	NULL	MUL		
+postagens	status	varchar(50)	YES	NULL			
+postagens	arquivos	longtext	YES	NULL			
+usuarios	id	int(11)	NO	NULL	PRI	auto_increment	
+usuarios	nome	varchar(255)	NO	NULL			
+usuarios	email	varchar(255)	NO	NULL	UNI		
+usuarios	cpf	varchar(20)	NO	NULL	UNI		
+usuarios	usuario	varchar(100)	NO	NULL	UNI		
+usuarios	senha	varchar(255)	NO	NULL			
+usuarios	tipo_usuario	enum('Administrador','Editor')	NO	'Editor'			
+usuarios	ultimo_login	datetime	YES	NULL			
+usuarios	data_criacao	datetime	NO	NULL			
+usuarios	foto_perfil	varchar(255)	YES	NULL			

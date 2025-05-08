@@ -1,6 +1,39 @@
 <?php
+// Iniciar output buffering
+ob_start();
+
 require_once 'config/config.php';
 require_once 'config/db.php';
+require_once 'includes/auth.php';
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) !== 'login.php') {
+    redirect('login.php');
+}
+
+// Define tempo de login se não estiver setado
+if (isset($_SESSION['user_id']) && !isset($_SESSION['login_time'])) {
+    $_SESSION['login_time'] = time();
+    $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
+}
+
+// Verifica inatividade (5 minutos)
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 300)) {
+    session_unset();
+    session_destroy();
+    redirect('login.php?reason=inactivity');
+}
+$_SESSION['last_activity'] = time();
+
+// Calcula o tempo logado
+$loginTime = $_SESSION['login_time'] ?? time();
+$timeLoggedIn = time() - $loginTime;
+$hours = floor($timeLoggedIn / 3600);
+$minutes = floor(($timeLoggedIn % 3600) / 60);
+$seconds = $timeLoggedIn % 60;
+$timeLoggedInString = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+
+// Agora carrega o HTML
 require_once 'includes/header.php';
 
 // Check if user has admin permission
@@ -147,7 +180,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 }
 
 // Get all users
-$query = "SELECT * FROM usuarios ORDER BY nome ASC";
+$query = "SELECT * FROM usuarios ORDER BY usuario ASC";
 $stmt = $conn->prepare($query);
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);

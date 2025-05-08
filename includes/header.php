@@ -1,299 +1,285 @@
 <?php
-require_once 'config/config.php';
-require_once 'includes/auth.php';
+// header.php - Cabeçalho completo atualizado
 
-// Check if user is logged in, redirect to login if not
-if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) !== 'login.php') {
-    redirect('login.php');
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
 }
-
-// Set login time if not set
-if (isset($_SESSION['user_id']) && !isset($_SESSION['login_time'])) {
-    $_SESSION['login_time'] = time();
-    $_SESSION['user_ip'] = $_SERVER['REMOTE_ADDR'];
-}
-
-// Calculate time logged in
-$loginTime = isset($_SESSION['login_time']) ? $_SESSION['login_time'] : time();
-$timeLoggedIn = time() - $loginTime;
-$hours = floor($timeLoggedIn / 3600);
-$minutes = floor(($timeLoggedIn % 3600) / 60);
-$seconds = $timeLoggedIn % 60;
-$timeLoggedInString = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
-
-// Check for inactivity timeout (5 minutes)
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 300)) {
-    // Last activity was more than 5 minutes ago
-    session_unset();     // unset $_SESSION variable
-    session_destroy();   // destroy session data
-    redirect('login.php?reason=inactivity');
-}
-$_SESSION['last_activity'] = time(); // update last activity time stamp
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+date_default_timezone_set('America/Araguaina');
+
+// Formatador de data/hora em português
+$formatter = new IntlDateFormatter(
+    'pt_BR',
+    IntlDateFormatter::FULL,
+    IntlDateFormatter::SHORT,
+    'America/Araguaina',
+    IntlDateFormatter::GREGORIAN,
+    "d 'de' MMMM 'de' yyyy - HH'h'mm"
+);
+$dataHoraFormatada = $formatter->format(new DateTime());
+
+// Dados do usuário
+$usuarioNome = $_SESSION['user_name'] ?? 'Usuário';
+$cidadeEstado = 'Palmas, Tocantins';
+$ipUsuario = $_SERVER['REMOTE_ADDR'] ?? 'IP desconhecido';
+
+// Cálculo do tempo logado
+if (isset($_SESSION['login_time'])) {
+    $segundosLogado = time() - $_SESSION['login_time'];
+    $horas = floor($segundosLogado / 3600);
+    $minutos = floor(($segundosLogado % 3600) / 60);
+    $tempoAtivo = sprintf('%02d:%02d', $horas, $minutos);
+} else {
+    $tempoAtivo = '00:00';
+}
+
+// Foto de perfil
+$fotoPerfil = $_SESSION['foto_perfil'] ?? 'assets/img/default_user.png';
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= APP_NAME ?> - <?= ucfirst($currentPage) ?></title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Flatpickr for Date/Time -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    
-    <!-- Custom styles -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    
-    <style>
-        /* Sidebar styles */
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .sidebar {
-            position: fixed;
-            top: 56px;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            width: 250px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            background-color: #0a1c30;
-            transition: all 0.3s;
-            overflow-y: auto;
-        }
-        
-        .sidebar-sticky {
-            position: relative;
-            top: 0;
-            height: calc(100vh - 56px);
-            padding-top: 1rem;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-        
-        .sidebar .nav-link {
-            color: #e9ecef;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.25rem;
-            border-radius: 0;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        
-        .sidebar .nav-link:hover {
-            background-color: rgba(108, 189, 69, 0.2);
-            color: #6cbd45;
-        }
-        
-        .sidebar .nav-link.active {
-            color: #fff;
-            background-color: #6cbd45;
-        }
-        
-        .sidebar .nav-link i {
-            margin-right: 0.75rem;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .main-content {
-            margin-left: 250px;
-            padding-top: 56px;
-            flex: 1;
-            width: calc(100% - 250px);
-            transition: all 0.3s;
-        }
-        
-        .navbar-aw7 {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            height: 56px;
-        }
-        
-        .brand-logo img {
-            height: 40px;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70px;
-            }
-            
-            .sidebar .nav-link span {
-                display: none;
-            }
-            
-            .sidebar .nav-link i {
-                margin-right: 0;
-                font-size: 1.2rem;
-            }
-            
-            .main-content {
-                margin-left: 70px;
-                width: calc(100% - 70px);
-            }
-            
-            .nav-text {
-                display: none;
-            }
-        }
-        
-        /* Mobile menu toggle */
-        #sidebar-toggle {
-            display: none;
-        }
-        
-        @media (max-width: 576px) {
-            #sidebar-toggle {
-                display: block;
-            }
-            
-            .sidebar {
-                transform: translateX(-100%);
-                width: 250px;
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .sidebar.show .nav-link span {
-                display: inline;
-            }
-            
-            .sidebar.show .nav-link i {
-                margin-right: 0.75rem;
-            }
-            
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Agendamento</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="assets/css/agendamento.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/cards-enhanced.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/light.css">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #2F1847;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 240px;
+      background-color: #FAF6F1;
+      padding-top: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #ddd;
+      z-index: 1000;
+    }
+    .sidebar a {
+      color: #2F1847;
+      text-decoration: none;
+      display: block;
+      padding: 14px 20px;
+      transition: background-color 0.3s;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    .sidebar a:hover {
+      background-color: rgba(122, 199, 79, 0.5);
+      color: #2F1847;
+    }
+    .sidebar a.active {
+      background-color: #7AC74F;
+      color: #ffffff;
+    }
+    .sidebar-logo {
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(47, 24, 71, 0.1);
+    }
+    .sidebar-logo img {
+      max-width: 80%;
+      height: auto;
+    }
+    .navbar-custom {
+      margin-left: 240px;
+      background-color: #ffffff;
+      height: 70px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid #ddd;
+      z-index: 999;
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+    }
+    .navbar-custom .info-bar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+    .navbar-custom .info-bar span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .navbar-custom .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .user-photo-container {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .user-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .navbar-custom .btn-danger {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      padding: 6px 12px;
+      background-color: #dc3545;
+      border: none;
+    }
+    .navbar-custom .btn-danger:hover {
+      background-color: #c82333;
+    }
+    main {
+      margin-left: 240px;
+      padding: 20px;
+      margin-top: 70px;
+    }
+    h1 {
+      color: #2F1847;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    hr {
+      border-top: 1px solid #ccc;
+      margin: 10px 0;
+    }
+  </style>
 </head>
+
 <body>
-    <!-- Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light navbar-aw7">
-        <div class="container-fluid">
-            <button id="sidebar-toggle" class="btn btn-sm d-md-none me-2">
-                <i class="fas fa-bars"></i>
-            </button>
-            <a class="navbar-brand brand-logo" href="dashboard.php">
-                <img src="assets/img/logo.png" alt="AW7 Postagens">
-            </a>
-            
-            <div class="d-flex ms-auto align-items-center">
-                <div class="text-end me-3 d-none d-md-block">
-                    <div class="small text-muted"><?= date('d/m/Y H:i') ?> (Palmas-TO)</div>
-                    <div class="small">
-                        <strong><?= $_SESSION['user_nome'] ?? 'Usuário' ?></strong> | 
-                        IP: <?= $_SESSION['user_ip'] ?? $_SERVER['REMOTE_ADDR'] ?> | 
-                        Tempo: <?= $timeLoggedInString ?>
-                    </div>
-                </div>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="perfil.php"><i class="fas fa-user me-2"></i>Meu Perfil</a></li>
-                        <li><a class="dropdown-item" href="configuracoes.php"><i class="fas fa-cog me-2"></i>Configurações</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
 
-    <?php if(isset($_SESSION['user_id'])): ?>
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-sticky">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'dashboard' ? 'active' : '' ?>" href="dashboard.php">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'index' ? 'active' : '' ?>" href="index.php">
-                        <i class="fas fa-calendar-plus"></i>
-                        <span>Agendar Postagem</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'postagens_agendadas' ? 'active' : '' ?>" href="postagens_agendadas.php">
-                        <i class="fas fa-calendar-check"></i>
-                        <span>Postagens Agendadas</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= in_array($currentPage, ['clientes', 'clientes_visualizar']) ? 'active' : '' ?>" href="clientes_visualizar.php">
-                        <i class="fas fa-users"></i>
-                        <span>Clientes</span>
-                    </a>
-                </li>
-                <?php if(isAdmin()): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'usuarios' ? 'active' : '' ?>" href="usuarios.php">
-                        <i class="fas fa-user-cog"></i>
-                        <span>Usuários</span>
-                    </a>
-                </li>
-                <?php endif; ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'relatorios' ? 'active' : '' ?>" href="relatorios.php">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>Relatórios</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'configuracoes' ? 'active' : '' ?>" href="configuracoes.php">
-                        <i class="fas fa-cog"></i>
-                        <span>Configurações</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= $currentPage === 'perfil' ? 'active' : '' ?>" href="perfil.php">
-                        <i class="fas fa-user"></i>
-                        <span>Meu Perfil</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-    <?php endif; ?>
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo mb-4">
+    <img src="assets/img/logo.png" alt="Logo">
+  </div>
 
-    <!-- Main Content -->
-    <div class="<?= isset($_SESSION['user_id']) ? 'main-content' : '' ?>">
-        <!-- Flash Messages -->
-        <?php $flash = getFlashMessage(); ?>
-        <?php if($flash): ?>
-        <div class="container mt-3">
-            <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show" role="alert">
-                <?= $flash['message'] ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-        <?php endif; ?>
+  <a href="dashboard.php" class="<?= ($currentPage == 'dashboard') ? 'active' : '' ?>">
+    <i class="fas fa-tachometer-alt me-2"></i> DASHBOARD
+  </a>
 
-        <!-- Main content container -->
-        <main class="container-fluid py-4">
+  <hr>
+
+  <a href="clientes_visualizar.php" class="<?= ($currentPage == 'clientes_visualizar') ? 'active' : '' ?>">
+    <i class="fas fa-users me-2"></i> CLIENTES
+  </a>
+
+  <hr>
+
+  <a href="index.php" class="<?= ($currentPage == 'index') ? 'active' : '' ?>">
+    <i class="fas fa-calendar-plus me-2"></i> AGENDAR POSTAGEM
+  </a>
+
+  <a href="postagens_cards.php" class="<?= ($currentPage == 'postagens_cards' || $currentPage == 'postagens_agendadas') ? 'active' : '' ?>">
+    <i class="fas fa-calendar-check me-2"></i> POSTAGENS AGENDADAS
+  </a>
+
+  <hr>
+
+  <a href="usuarios.php" class="<?= ($currentPage == 'usuarios') ? 'active' : '' ?>">
+    <i class="fas fa-users-cog me-2"></i> USUÁRIOS
+  </a>
+
+  <hr>
+
+  <a href="relatorios.php" class="<?= ($currentPage == 'relatorios') ? 'active' : '' ?>">
+    <i class="fas fa-chart-line me-2"></i> RELATÓRIOS
+  </a>
+
+  <hr>
+
+  <a href="logs.php" class="<?= ($currentPage == 'logs') ? 'active' : '' ?>">
+    <i class="fas fa-file-alt me-2"></i> LOGS DO SISTEMA
+  </a>
+
+  <a href="configuracoes.php" class="<?= ($currentPage == 'configuracoes') ? 'active' : '' ?>">
+    <i class="fas fa-cogs me-2"></i> CONFIGURAÇÕES
+  </a>
+
+  <a href="webhooks.php" class="<?= ($currentPage == 'webhooks') ? 'active' : '' ?>">
+    <i class="fas fa-random me-2"></i> WEBHOOKS
+  </a>
+
+  <hr>
+
+  <a href="meu_perfil.php" class="<?= ($currentPage == 'meu_perfil') ? 'active' : '' ?>">
+    <i class="fas fa-user-circle me-2"></i> MEU PERFIL
+  </a>
+</nav>
+
+<!-- Barra Superior -->
+<header class="navbar-custom">
+  <div class="info-bar">
+    <span><i class="fas fa-user"></i> <?= htmlspecialchars($usuarioNome) ?></span> |
+    <span><i class="fas fa-globe"></i> <?= $cidadeEstado ?></span> |
+    <span><i class="fas fa-clock"></i> <?= $dataHoraFormatada ?></span> |
+    <span><i class="fas fa-desktop"></i> IP: <?= $ipUsuario ?></span> |
+    <span><i class="fas fa-hourglass-half"></i> <span id="tempo-atividade"><?= $tempoAtivo ?></span></span>
+  </div>
+
+  <div class="user-actions">
+    <div class="user-photo-container">
+      <?php
+      $foto_perfil = $_SESSION['user_foto'] ?? '';
+      $foto_url = !empty($foto_perfil) && file_exists('arquivos/fotos_perfil/' . $foto_perfil)
+          ? 'arquivos/fotos_perfil/' . $foto_perfil
+          : 'assets/img/semfoto.png';
+      ?>
+      <img src="<?= htmlspecialchars($foto_url) ?>" alt="Foto de Perfil" class="user-photo">
+    </div>
+    <a href="logout.php" class="btn btn-danger">
+      <i class="fas fa-sign-out-alt"></i> Sair
+    </a>
+  </div>
+</header>
+
+<!-- Script tempo de atividade -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let tempoInicial = '<?= $tempoAtivo ?>';
+  let [horas, minutos] = tempoInicial.split(':').map(Number);
+  let totalSegundos = (horas * 3600) + (minutos * 60);
+
+  setInterval(function() {
+    totalSegundos++;
+    let h = Math.floor(totalSegundos / 3600);
+    let m = Math.floor((totalSegundos % 3600) / 60);
+    let s = totalSegundos % 60;
+    document.getElementById('tempo-atividade').textContent = 
+        String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }, 1000);
+});
+</script>
+
+<main>
+<!-- Aqui começa o conteúdo da página -->

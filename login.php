@@ -1,10 +1,14 @@
 <?php
+// Iniciar output buffering
+ob_start();
+
 require_once 'config/config.php';
 require_once 'config/db.php';
+require_once 'includes/auth.php';
 
 // Redirect if already logged in
 if(isset($_SESSION['user_id'])) {
-    redirect('dashboard.php');
+    redirect('index.php');
 }
 
 // Setup database tables if not exists
@@ -19,17 +23,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         setFlashMessage('danger', 'Por favor, preencha todos os campos.');
     } else {
-        require_once 'includes/auth.php';
         $user = verifyUser($username, $password);
         
         if ($user) {
+            // Registrar tentativa bem-sucedida
+            registrarTentativaLogin($username, true);
+            
+            // Login bem-sucedido
             createUserSession($user);
+            
+            // Enviar notificação via webhook
+            enviarWebhook('login', [
+                'acao' => 'Login',
+                'detalhes' => 'Usuário realizou login no sistema'
+            ]);
+            
+            // Redirecionar para a página principal
             redirect('dashboard.php');
         } else {
+            // Registrar tentativa malsucedida
+            registrarTentativaLogin($username, false);
+            
             setFlashMessage('danger', 'Usuário ou senha inválidos.');
         }
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -68,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 30px;
         }
         .logo img {
-            height: 80px;
+            height: 180px;
             margin-bottom: 15px;
         }
         .form-control {
@@ -101,7 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-container">
         <div class="logo">
             <img src="assets/img/logo.png" alt="<?= APP_NAME ?>">
-            <h2><?= APP_NAME ?></h2>
         </div>
         
         <?php $flash = getFlashMessage(); ?>
@@ -135,9 +153,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
         
         <div class="text-center mt-4">
-            <p class="text-muted">
-                Usuário padrão: <strong>admin</strong> | Senha: <strong>admin123</strong>
-            </p>
         </div>
     </div>
 

@@ -180,7 +180,7 @@ if ($clienteSelecionado) {
                     <h1 class="mb-1"><?= $titulo ?></h1>
                     <?php if ($clienteSelecionado): ?>
                     <p class="text-muted">
-                        @<?= htmlspecialchars($clienteSelecionado['instagram']) ?> · 
+                        @<?= htmlspecialchars($clienteSelecionado['instagram'] ?? '') ?> · 
                         <?= getNomePeriodo($periodoRelatorio) ?>
                     </p>
                     <?php else: ?>
@@ -206,7 +206,7 @@ if ($clienteSelecionado) {
                                 <option value="">Selecione um cliente</option>
                                 <?php foreach ($clientes as $cliente): ?>
                                 <option value="<?= $cliente['id'] ?>" <?= ($clienteId == $cliente['id']) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($cliente['nome']) ?> (@<?= htmlspecialchars($cliente['instagram']) ?>)
+                                    <?= htmlspecialchars($cliente['nome'] ?? '') ?> (@<?= htmlspecialchars($cliente['instagram'] ?? '') ?>)
                                 </option>
                                 <?php endforeach; ?>
                             </select>
